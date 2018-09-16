@@ -5,7 +5,6 @@ const config = require('config')
 const utils = require('../lib/utils')
 const mongodb = require('./mongodb')
 const insecurity = require('../lib/insecurity')
-const isDocker = require('is-docker')
 
 const fs = require('fs')
 const path = require('path')
@@ -54,12 +53,12 @@ async function createChallenges () {
           key,
           name,
           category,
-          description,
+          description: disabledEnv ? (description + ' <em>(This challenge is not available on: ' + disabledEnv + ')</em>') : description,
           difficulty,
           solved: false,
           hint: showHints ? hint : null,
           hintUrl: showHints ? hintUrl : null,
-          disabledEnv: (isDocker() && disabledEnv === 'Docker') ? disabledEnv : null
+          disabledEnv: utils.determineDisabledContainerEnv(disabledEnv)
         })
         datacache.challenges[key] = challenge
       } catch (err) {
@@ -125,7 +124,8 @@ function createProducts () {
     if (utils.startsWith(product.image, 'http')) {
       const imageUrl = product.image
       product.image = decodeURIComponent(product.image.substring(product.image.lastIndexOf('/') + 1))
-      utils.downloadToFile(imageUrl, 'app/public/images/products/' + product.image)
+      // utils.downloadToFile(imageUrl, 'app/public/images/products/' + product.image)
+      utils.downloadToFile(imageUrl, 'frontend/src/assets/public/images/products/' + product.image)
     }
 
     // set deleted at values if configured
@@ -151,7 +151,8 @@ function createProducts () {
   if (utils.startsWith(blueprint, 'http')) {
     const blueprintUrl = blueprint
     blueprint = decodeURIComponent(blueprint.substring(blueprint.lastIndexOf('/') + 1))
-    utils.downloadToFile(blueprintUrl, 'app/public/images/products/' + blueprint)
+    // utils.downloadToFile(blueprintUrl, 'app/public/images/products/' + blueprint)
+    utils.downloadToFile(blueprintUrl, 'frontend/src/assets/public/images/products/' + blueprint)
   }
   datacache.retrieveBlueprintChallengeFile = blueprint
 

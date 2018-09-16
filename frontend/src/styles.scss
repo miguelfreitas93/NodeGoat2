@@ -1,0 +1,23 @@
+@import '~@angular/material/prebuilt-themes/pink-bluegrey.css';
+@import '~ng2-bar-rating/themes/br-default-theme.css';
+
+.img-thumbnail {
+  background-color: #1c1e22;
+  border: 1px solid #0c0d0e;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.confirmation {
+  color: #5bc0de;
+}
+
+.error {
+  color: #ff0000;
+}
+
+.close-dialog {
+  float: right;
+  margin-top: 15px;
+  width: fit-content;
+}

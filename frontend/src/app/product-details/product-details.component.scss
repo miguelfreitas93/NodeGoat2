@@ -1,0 +1,41 @@
+.image img {
+  border: 1px solid #0c0d0e;
+  border-radius: 4px;
+  max-height: 140px;
+  padding: 4px;
+  max-width: 160px;
+  height: auto;
+  width: auto;
+}
+
+.ex-container {
+  display: flex;
+  flex-flow: row;
+}
+
+.ex-container .description {
+  left: 250px;
+  position: relative;
+  width: 40%;
+}
+
+.description p {
+  font-size: 16px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+blockquote {
+  border-left: 5px solid #d3d3d3;
+}
+
+blockquote p {
+  margin-left: 5px;
+}
+
+.btn-container button:nth-child(2) {
+  left: 530px;
+  width: 50px;
+}

@@ -9,7 +9,6 @@ const helmet = require('helmet')
 const errorhandler = require('errorhandler')
 const cookieParser = require('cookie-parser')
 const serveIndex = require('serve-index')
-const favicon = require('serve-favicon')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const securityTxt = require('express-security.txt')
@@ -93,11 +92,10 @@ if (config.get('application.favicon')) {
   if (utils.startsWith(icon, 'http')) {
     const iconPath = icon
     icon = decodeURIComponent(icon.substring(icon.lastIndexOf('/') + 1))
-    fs.closeSync(fs.openSync('app/public/' + icon, 'w')) // touch file so it is guaranteed to exist for favicon() call
-    utils.downloadToFile(iconPath, 'app/public/' + icon)
+    fs.closeSync(fs.openSync('frontend/src/assets/public/' + icon, 'w')) // touch file so it is guaranteed to exist for favicon() call
+    utils.downloadToFile(iconPath, 'frontend/src/assets/public/' + icon)
   }
 }
-app.use(favicon(path.join(__dirname, 'app/public/' + icon)))
 
 /* Security Policy */
 app.get('/security.txt', verify.accessControlChallenges())

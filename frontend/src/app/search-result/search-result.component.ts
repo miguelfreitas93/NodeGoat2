@@ -13,11 +13,12 @@ import fontawesome from '@fortawesome/fontawesome'
 import { faEye, faCartPlus } from '@fortawesome/fontawesome-free-solid'
 fontawesome.library.add(faEye, faCartPlus)
 import * as io from 'socket.io-client'
+import { TranslateService } from '@ngx-translate/core'
 
 @Component({
   selector: 'app-search-result',
   templateUrl: './search-result.component.html',
-  styleUrls: ['./search-result.component.css']
+  styleUrls: ['./search-result.component.scss']
 })
 export class SearchResultComponent implements AfterViewInit,OnDestroy {
 
@@ -27,11 +28,12 @@ export class SearchResultComponent implements AfterViewInit,OnDestroy {
   public searchValue
   public io = io
   public socket
+  public confirmation = undefined
   @ViewChild(MatPaginator) paginator: MatPaginator
   private productSubscription: Subscription
   private routerSubscription: Subscription
 
-  constructor (private dialog: MatDialog, private productService: ProductService,private basketService: BasketService, private router: Router, private route: ActivatedRoute, private sanitizer: DomSanitizer, private ngZone: NgZone) { }
+  constructor (private dialog: MatDialog, private productService: ProductService,private basketService: BasketService, private translateService: TranslateService, private router: Router, private route: ActivatedRoute, private sanitizer: DomSanitizer, private ngZone: NgZone) { }
 
   ngAfterViewInit () {
 
@@ -48,7 +50,7 @@ export class SearchResultComponent implements AfterViewInit,OnDestroy {
       this.routerSubscription = this.router.events.subscribe(() => {
         this.filterTable()
       })
-    })
+    }, (err) => console.log(err))
   }
 
   ngOnDestroy () {
@@ -95,19 +97,31 @@ export class SearchResultComponent implements AfterViewInit,OnDestroy {
           found = true
           this.basketService.get(productsInBasket[i].BasketItem.id).subscribe((existingBasketItem) => {
             let newQuantity = existingBasketItem.quantity + 1
-            this.basketService.put(existingBasketItem.id, { quantity: newQuantity }).subscribe(() => {
-              /* Translations to be added when i18n is set up */
-            })
-          })
+            this.basketService.put(existingBasketItem.id, { quantity: newQuantity }).subscribe((updatedBasketItem) => {
+              this.productService.get(updatedBasketItem.ProductId).subscribe((product) => {
+                this.translateService.get('BASKET_ADD_SAME_PRODUCT', { product: product.name }).subscribe((basketAddSameProduct) => {
+                  this.confirmation = basketAddSameProduct
+                }, (translationId) => {
+                  this.confirmation = translationId
+                })
+              }, (err) => console.log(err))
+            },(err) => console.log(err))
+          }, (err) => console.log(err))
           break
         }
       }
       if (!found) {
-        this.basketService.save({ ProductId: id, BasketId: sessionStorage.bid, quantity: 1 }).subscribe((newBasketItem) => {
-          /* Translations to be added when i18n is set up */
-        })
+        this.basketService.save({ ProductId: id, BasketId: sessionStorage.getItem('bid'), quantity: 1 }).subscribe((newBasketItem) => {
+          this.productService.get(newBasketItem.ProductId).subscribe((product) => {
+            this.translateService.get('BASKET_ADD_PRODUCT', { product: product.name }).subscribe((basketAddProduct) => {
+              this.confirmation = basketAddProduct
+            }, (translationId) => {
+              this.confirmation = translationId
+            })
+          }, (err) => console.log(err))
+        }, (err) => console.log(err))
       }
-    })
+    }, (err) => console.log(err))
   }
 
   trustProductDescription (tableData: any[]) {

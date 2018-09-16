@@ -5,27 +5,29 @@ import { AdministrationService } from './../Services/administration.service'
 import { ConfigurationService } from './../Services/configuration.service'
 import { Component, OnInit, NgZone } from '@angular/core'
 import { CookieService } from 'ngx-cookie'
+import { TranslateService } from '@ngx-translate/core'
 import { Router } from '@angular/router'
 import { languages } from './languages'
 import { faSearch, faSignInAlt, faComment, faBomb, faTrophy, faInfoCircle, faShoppingCart, faUserSecret, faRecycle, faMapMarker, faUserCircle, faFlask, faLanguage } from '@fortawesome/fontawesome-free-solid'
+import { faComments } from '@fortawesome/fontawesome-free-regular'
+import { faGithub } from '@fortawesome/fontawesome-free-brands'
 import fontawesome from '@fortawesome/fontawesome'
-import { TranslateService } from '@ngx-translate/core'
-fontawesome.library.add(faLanguage, faFlask, faSearch, faSignInAlt, faComment, faBomb, faTrophy, faInfoCircle, faShoppingCart, faUserSecret, faRecycle, faMapMarker, faUserCircle)
+fontawesome.library.add(faLanguage, faFlask, faSearch, faSignInAlt, faComment, faBomb, faTrophy, faInfoCircle, faShoppingCart, faUserSecret, faRecycle, faMapMarker, faUserCircle, faGithub, faComments)
 import * as io from 'socket.io-client'
 
 @Component({
   selector: 'app-navbar',
   templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.css']
+  styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent implements OnInit {
 
   public userEmail = ''
   public languages = languages
-  public selectedLanguage = 'English'
+  public selectedLanguage = this.languages[0]
   public version: string = ''
   public applicationName = 'OWASP Juice Shop'
-  public gitHubRibbon = 'orange'
+  public gitHubRibbon = true
   public logoSrc = 'assets/public/images/JuiceShop_Logo.svg'
   public io = io
   public socket
@@ -47,8 +49,8 @@ export class NavbarComponent implements OnInit {
       if (config && config.application && config.application.name && config.application.name !== null) {
         this.applicationName = config.application.name
       }
-      if (config && config.application && config.application.gitHubRibbon && config.application.gitHubRibbon !== null) {
-        this.gitHubRibbon = config.application.gitHubRibbon !== 'none' ? config.application.gitHubRibbon : null
+      if (config && config.application && config.application.gitHubRibbon !== null) {
+        this.gitHubRibbon = config.application.gitHubRibbon
       }
 
       if (config && config.application && config.application.logo && config.application.logo !== null) {
@@ -83,6 +85,12 @@ export class NavbarComponent implements OnInit {
         this.getScoreBoardStatus()
       })
     })
+
+    if (this.cookieService.get('language')) {
+      const langKey = this.cookieService.get('language')
+      this.translate.use(langKey)
+      this.selectedLanguage = this.languages.find(x => x.key === langKey)
+    }
   }
 
   search (value: string) {
@@ -114,6 +122,7 @@ export class NavbarComponent implements OnInit {
 
   changeLanguage (langKey) {
     this.translate.use(langKey)
+    this.cookieService.put('language', langKey)
   }
 
   getScoreBoardStatus () {

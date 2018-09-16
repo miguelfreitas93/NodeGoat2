@@ -1,19 +1,21 @@
+import { environment } from './../../environments/environment'
 import { WindowRefService } from './../Services/window-ref.service'
 import { MatTableDataSource } from '@angular/material/table'
 import { DomSanitizer } from '@angular/platform-browser'
 import { ChallengeService } from './../Services/challenge.service'
 import { ConfigurationService } from './../Services/configuration.service'
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, NgZone } from '@angular/core'
 import fontawesome from '@fortawesome/fontawesome'
 import { faBook } from '@fortawesome/fontawesome-free-solid'
 import { faFlag } from '@fortawesome/fontawesome-free-regular'
 import { faGitter, faGithub } from '@fortawesome/fontawesome-free-brands'
 fontawesome.library.add(faBook, faFlag, faGitter, faGithub)
+import * as io from 'socket.io-client'
 
 @Component({
   selector: 'app-score-board',
   templateUrl: './score-board.component.html',
-  styleUrls: ['./score-board.component.css']
+  styleUrls: ['./score-board.component.scss']
 })
 export class ScoreBoardComponent implements OnInit {
 
@@ -25,7 +27,9 @@ export class ScoreBoardComponent implements OnInit {
   public challenges: any[]
   public percentChallengesSolved
   public completionColor
-  constructor (private configurationService: ConfigurationService,private challengeService: ChallengeService,private windowRefService: WindowRefService,private sanitizer: DomSanitizer) {}
+  public io = io
+  public socket
+  constructor (private configurationService: ConfigurationService,private challengeService: ChallengeService,private windowRefService: WindowRefService,private sanitizer: DomSanitizer, private ngZone: NgZone) {}
 
   ngOnInit () {
     this.scoreBoardTablesExpanded = localStorage.getItem('scoreBoardTablesExpanded') ? JSON.parse(localStorage.getItem('scoreBoardTablesExpanded')) : [null, true, false, false, false, false, false]
@@ -33,7 +37,7 @@ export class ScoreBoardComponent implements OnInit {
     this.configurationService.getApplicationConfiguration().subscribe((data: any) => {
       this.allowRepeatNotifications = data.application.showChallengeSolvedNotifications && data.ctf.showFlagsInNotifications
       this.showChallengeHints = data.application.showChallengeHints
-    },(err) => err)
+    },(err) => console.log(err))
 
     this.challengeService.find().subscribe((challenges) => {
       this.challenges = challenges
@@ -52,7 +56,26 @@ export class ScoreBoardComponent implements OnInit {
       this.trustDescriptionHtml()
       this.calculateProgressPercentage()
       this.setOffset(challenges)
-    },(err) => console.log(err))
+    },(err) => {
+      this.challenges = undefined
+      console.log(err)
+    })
+
+    this.ngZone.runOutsideAngular(() => {
+      this.socket = this.io.connect(environment.hostServer)
+      this.socket.on('challenge solved', (data) => {
+        if (data && data.challenge) {
+          for (let i = 0; i < this.challenges.length; i++) {
+            if (this.challenges[i].name === data.name) {
+              this.challenges[i].solved = true
+              break
+            }
+          }
+          this.calculateProgressPercentage()
+          this.setOffset(this.challenges)
+        }
+      })
+    })
   }
 
   trustDescriptionHtml () {
@@ -106,7 +129,7 @@ export class ScoreBoardComponent implements OnInit {
     if (this.allowRepeatNotifications) {
       this.challengeService.repeatNotification(encodeURIComponent(challenge.name)).subscribe(() => {
         this.windowRefService.nativeWindow.scrollTo(0, 0)
-      },(err) => err)
+      },(err) => console.log(err))
     }
   }
 
